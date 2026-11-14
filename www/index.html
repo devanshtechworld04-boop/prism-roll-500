@@ -11,18 +11,19 @@
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
         body {
             background-color: #050510;
             color: #ffffff;
             overflow: hidden;
-            touch-action: none;
         }
         #gameCanvas {
             display: block;
             width: 100vw;
             height: 100vh;
+            touch-action: none;
         }
         /* UI Overlays */
         .overlay {
@@ -30,15 +31,15 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: calc(100% - 55px); /* Leave space for Bottom Banner Ad */
+            height: calc(100% - 55px);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: radial-gradient(circle at center, rgba(15, 15, 35, 0.88) 0%, rgba(5, 5, 16, 0.98) 100%);
-            z-index: 10;
+            background: radial-gradient(circle at center, rgba(15, 15, 35, 0.92) 0%, rgba(5, 5, 16, 0.98) 100%);
+            z-index: 50;
             padding: 15px;
-            transition: opacity 0.3s ease;
+            touch-action: auto;
         }
         .hidden {
             display: none !important;
@@ -51,7 +52,6 @@
             background: linear-gradient(90deg, #ff0055, #00f3ff, #ffea00, #00ff66);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
             margin-bottom: 8px;
             text-align: center;
         }
@@ -66,7 +66,7 @@
             background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%);
             color: #050510;
             border: none;
-            padding: 15px 40px;
+            padding: 16px 40px;
             font-size: 1.1rem;
             font-weight: 800;
             border-radius: 50px;
@@ -75,9 +75,11 @@
             text-transform: uppercase;
             letter-spacing: 1.5px;
             margin: 8px;
-            transition: transform 0.15s ease;
             width: 85%;
             max-width: 300px;
+            position: relative;
+            z-index: 60;
+            touch-action: manipulation;
         }
         .btn:active {
             transform: scale(0.95);
@@ -88,14 +90,13 @@
             color: #050510;
         }
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.12);
             color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.35);
             box-shadow: none;
             font-size: 0.95rem;
-            padding: 12px 25px;
+            padding: 14px 25px;
         }
-        /* Native Ad Slot Container */
         #native-ad-container {
             width: 85%;
             max-width: 320px;
@@ -112,7 +113,6 @@
             color: #667;
             padding: 8px;
         }
-        /* HUD */
         #hud {
             position: absolute;
             top: 0;
@@ -153,7 +153,6 @@
             background: linear-gradient(90deg, #00f3ff, #ff0055);
             transition: width 0.1s linear;
         }
-        /* Level Selector Grid */
         #levelSelectGrid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -166,6 +165,7 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
             margin-bottom: 15px;
+            touch-action: pan-y;
         }
         .lvl-item {
             padding: 12px 5px;
@@ -181,9 +181,7 @@
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: #555;
-            cursor: not-allowed;
         }
-        /* AdMob Banner Slot */
         #admob-banner-slot {
             position: absolute;
             bottom: 0;
@@ -203,10 +201,8 @@
 </head>
 <body>
 
-    <!-- Game Canvas -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- In-Game HUD -->
     <div id="hud" class="hidden">
         <div class="hud-box">LEVEL <span id="hudLevel">1</span> / 500</div>
         <div class="hud-box">GEMS: <span id="hudGems">0</span></div>
@@ -222,10 +218,9 @@
         <div style="margin-bottom: 15px; font-size: 1.05rem; color: #00f3ff; font-weight: 600;">
             Level: <span id="menuLevelDisplay">1</span> | Gems: <span id="menuGemsDisplay">0</span>
         </div>
-        <button class="btn" onclick="startGame(currentLevel)">PLAY LEVEL <span id="playBtnLvl">1</span></button>
-        <button class="btn btn-secondary" onclick="openLevelSelect()">SELECT LEVEL (1-500)</button>
+        <button type="button" class="btn" id="btnPlay">PLAY LEVEL <span id="playBtnLvl">1</span></button>
+        <button type="button" class="btn btn-secondary" id="btnSelectLevel">SELECT LEVEL (1-500)</button>
         
-        <!-- Native Advanced Ad Slot -->
         <div id="native-ad-container" data-ad-unit="ca-app-pub-5317235020851620/3716731101">
             <span>SPONSORED</span>
             <small style="color:#445; margin-top:4px;">Native Ad Unit Ready</small>
@@ -240,27 +235,25 @@
     <div id="levelSelectScreen" class="overlay hidden">
         <h2 style="margin-bottom: 15px; letter-spacing: 2px;">SELECT LEVEL</h2>
         <div id="levelSelectGrid"></div>
-        <button class="btn btn-secondary" onclick="closeLevelSelect()">BACK</button>
+        <button type="button" class="btn btn-secondary" id="btnBackMenu">BACK</button>
     </div>
 
     <!-- Game Over Screen -->
     <div id="gameOverScreen" class="overlay hidden">
         <h1 style="background: linear-gradient(90deg, #ff0055, #ff5500); -webkit-background-clip: text;">SHATTERED!</h1>
         <div class="subtitle">Wrong Color or Obstacle Hit</div>
-        <!-- Rewarded Ad Button -->
-        <button class="btn btn-reward" onclick="triggerRewardedRevive()">▶ REVIVE (WATCH AD)</button>
-        <button class="btn" onclick="startGame(currentLevel)">RETRY LEVEL</button>
-        <button class="btn btn-secondary" onclick="goHome()">MAIN MENU</button>
+        <button type="button" class="btn btn-reward" id="btnRevive">▶ REVIVE (WATCH AD)</button>
+        <button type="button" class="btn" id="btnRetry">RETRY LEVEL</button>
+        <button type="button" class="btn btn-secondary" id="btnGameOverHome">MAIN MENU</button>
     </div>
 
     <!-- Level Complete Screen -->
     <div id="levelCompleteScreen" class="overlay hidden">
         <h1 style="background: linear-gradient(90deg, #00ff66, #00f3ff); -webkit-background-clip: text;">LEVEL CLEARED!</h1>
         <div class="subtitle" id="winRewardText">+25 GEMS EARNED</div>
-        <!-- Rewarded Interstitial Button -->
-        <button class="btn btn-reward" id="btnDoubleGems" onclick="triggerRewardedInterstitialBonus()">⚡ 2X GEMS (+50 BONUS)</button>
-        <button class="btn" onclick="nextLevel()">NEXT LEVEL (<span id="nextLvlNum">2</span>)</button>
-        <button class="btn btn-secondary" onclick="goHome()">MAIN MENU</button>
+        <button type="button" class="btn btn-reward" id="btnDoubleGems">⚡ 2X GEMS (+50 BONUS)</button>
+        <button type="button" class="btn" id="btnNextLevel">NEXT LEVEL (<span id="nextLvlNum">2</span>)</button>
+        <button type="button" class="btn btn-secondary" id="btnWinHome">MAIN MENU</button>
     </div>
 
     <!-- AdMob Banner Space -->
@@ -269,11 +262,6 @@
     </div>
 
 <script>
-/**
- * ============================================================================
- * GOOGLE ADMOB FULL INTEGRATION BRIDGE (ALL 6 AD UNITS CONFIGURED)
- * ============================================================================
- */
 const AdMobConfig = {
     bannerId: "ca-app-pub-5317235020851620/2289913450",
     interstitialId: "ca-app-pub-5317235020851620/6967525065",
@@ -281,193 +269,135 @@ const AdMobConfig = {
     rewardedId: "ca-app-pub-5317235020851620/6584381682",
     nativeAdvancedId: "ca-app-pub-5317235020851620/3716731101",
     appOpenId: "ca-app-pub-5317235020851620/1880905256",
-    levelsPerInterstitial: 3 // Every 3 completed levels triggers Interstitial Ad
+    levelsPerInterstitial: 3
 };
 
 let levelsPlayedCount = 0;
 let bonusClaimedThisLevel = false;
 
-// 1. Initialize AdMob, App Open Ad, Banner Ad & Native Ad on Startup
 async function initAllAdMobUnits() {
-    console.log("Initializing AdMob with User Ad Unit IDs...");
-    
-    // Capacitor AdMob Community Plugin Support
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
-        const { AdMob } = window.Capacitor.Plugins;
-        try {
+    try {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+            const { AdMob } = window.Capacitor.Plugins;
             await AdMob.initialize({
                 requestTrackingAuthorization: true,
-                initializeForTesting: false // Live Ads Enabled
+                initializeForTesting: false
             });
-
-            // Show Persistent Bottom Banner Ad
             await AdMob.showBanner({
                 adId: AdMobConfig.bannerId,
                 adSize: 'ADAPTIVE_BANNER',
                 position: 'BOTTOM_CENTER',
                 margin: 0
             });
-
-            // Preload Interstitial & Rewarded Ads
             AdMob.prepareInterstitial({ adId: AdMobConfig.interstitialId });
             AdMob.prepareRewardVideoAd({ adId: AdMobConfig.rewardedId });
-        } catch (err) {
-            console.error("AdMob Capacitor Init Error:", err);
         }
-    }
-
-    // Native Android WebView Bridge Support (If wrapped via Android Studio / Sketchware / APK Builder)
-    if (window.AndroidAds) {
-        if (window.AndroidAds.loadAppOpen) window.AndroidAds.loadAppOpen(AdMobConfig.appOpenId);
-        if (window.AndroidAds.loadBanner) window.AndroidAds.loadBanner(AdMobConfig.bannerId);
-        if (window.AndroidAds.loadNative) window.AndroidAds.loadNative(AdMobConfig.nativeAdvancedId);
-        if (window.AndroidAds.preloadInterstitial) window.AndroidAds.preloadInterstitial(AdMobConfig.interstitialId);
-        if (window.AndroidAds.preloadRewarded) window.AndroidAds.preloadRewarded(AdMobConfig.rewardedId);
-        if (window.AndroidAds.preloadRewardedInterstitial) window.AndroidAds.preloadRewardedInterstitial(AdMobConfig.rewardedInterstitialId);
+    } catch (err) {
+        console.log("AdMob init skipped or pending:", err);
     }
 }
 
-// Trigger App Open Ad when user returns to app from background
-document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && gameState === "MENU") {
-        if (window.AndroidAds && window.AndroidAds.showAppOpen) {
-            window.AndroidAds.showAppOpen(AdMobConfig.appOpenId);
-        }
-    }
-});
-
-// 2. Interstitial Ad Trigger (Every 3 Levels)
 async function showInterstitialAd() {
-    console.log("Showing Interstitial Ad:", AdMobConfig.interstitialId);
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
-        const { AdMob } = window.Capacitor.Plugins;
-        try {
+    try {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+            const { AdMob } = window.Capacitor.Plugins;
             await AdMob.showInterstitial();
-            AdMob.prepareInterstitial({ adId: AdMobConfig.interstitialId }); // Preload next
-        } catch (e) { console.log(e); }
-    } else if (window.AndroidAds && window.AndroidAds.showInterstitial) {
-        window.AndroidAds.showInterstitial(AdMobConfig.interstitialId);
-    }
+            AdMob.prepareInterstitial({ adId: AdMobConfig.interstitialId });
+        }
+    } catch (e) {}
 }
 
-// 3. Rewarded Ad Trigger (Revive Player on Crash)
 async function triggerRewardedRevive() {
-    console.log("Showing Rewarded Ad for Revive:", AdMobConfig.rewardedId);
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
-        const { AdMob } = window.Capacitor.Plugins;
-        try {
+    try {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+            const { AdMob } = window.Capacitor.Plugins;
             const reward = await AdMob.showRewardVideoAd();
             if (reward) revivePlayer();
             AdMob.prepareRewardVideoAd({ adId: AdMobConfig.rewardedId });
-        } catch (e) {
-            revivePlayer();
+            return;
         }
-    } else if (window.AndroidAds && window.AndroidAds.showRewarded) {
-        window.AndroidAds.showRewarded(AdMobConfig.rewardedId);
-        // Native callback should call window.onAdRewardEarned('revive')
-    } else {
-        // Fallback when testing in browser
-        revivePlayer();
-    }
+    } catch (e) {}
+    revivePlayer();
 }
 
-// 4. Rewarded Interstitial Ad Trigger (2X Gems Bonus on Level Complete)
 async function triggerRewardedInterstitialBonus() {
     if (bonusClaimedThisLevel) return;
-    console.log("Showing Rewarded Interstitial Ad for 2X Gems:", AdMobConfig.rewardedInterstitialId);
-    
-    if (window.AndroidAds && window.AndroidAds.showRewardedInterstitial) {
-        window.AndroidAds.showRewardedInterstitial(AdMobConfig.rewardedInterstitialId);
-    } else if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
-        const { AdMob } = window.Capacitor.Plugins;
-        try {
+    try {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+            const { AdMob } = window.Capacitor.Plugins;
             await AdMob.prepareRewardVideoAd({ adId: AdMobConfig.rewardedInterstitialId });
             await AdMob.showRewardVideoAd();
-            grantDoubleGemsBonus();
-        } catch (e) {
-            grantDoubleGemsBonus();
         }
-    } else {
-        // Fallback when testing in browser
-        grantDoubleGemsBonus();
-    }
+    } catch (e) {}
+    grantDoubleGemsBonus();
 }
 
 function grantDoubleGemsBonus() {
     if (bonusClaimedThisLevel) return;
     bonusClaimedThisLevel = true;
-    totalGems += 25; // Extra +25 to make +50 total
+    totalGems += 25;
     saveProgress();
     playSound('win');
     document.getElementById('winRewardText').innerText = "2X BONUS CLAIMED! (+50 GEMS)";
     document.getElementById('btnDoubleGems').classList.add('hidden');
 }
 
-// Global Callback Function for Native Android Java/Kotlin Bridge
-window.onAdRewardEarned = function(rewardType) {
-    if (rewardType === 'revive') revivePlayer();
-    if (rewardType === 'double_gems') grantDoubleGemsBonus();
-};
-
 window.addEventListener('load', initAllAdMobUnits);
 
-/**
- * ============================================================================
- * WEB AUDIO API SYNTHESIZER (NO EXTERNAL MP3 FILES NEEDED!)
- * ============================================================================
- */
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
+// Safe Web Audio Synthesizer
+let audioCtx = null;
 function playSound(type) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
+    try {
+        if (!audioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) audioCtx = new AudioContext();
+        }
+        if (!audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    const now = audioCtx.currentTime;
-    if (type === 'gem') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(600, now);
-        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-        osc.start(now);
-        osc.stop(now + 0.1);
-    } else if (type === 'switch') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(300, now);
-        osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-        osc.start(now);
-        osc.stop(now + 0.15);
-    } else if (type === 'crash') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, now);
-        osc.frequency.exponentialRampToValueAtTime(40, now + 0.35);
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-        osc.start(now);
-        osc.stop(now + 0.35);
-    } else if (type === 'win') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(400, now);
-        osc.frequency.setValueAtTime(500, now + 0.1);
-        osc.frequency.setValueAtTime(600, now + 0.2);
-        osc.frequency.setValueAtTime(800, now + 0.3);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-        osc.start(now);
-        osc.stop(now + 0.5);
-    }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'gem') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } else if (type === 'switch') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+        } else if (type === 'crash') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.exponentialRampToValueAtTime(40, now + 0.35);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+            osc.start(now);
+            osc.stop(now + 0.35);
+        } else if (type === 'win') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.setValueAtTime(600, now + 0.15);
+            osc.frequency.setValueAtTime(800, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+            osc.start(now);
+            osc.stop(now + 0.45);
+        }
+    } catch (e) {}
 }
 
-/**
- * ============================================================================
- * CORE 500-LEVEL PROCEDURAL GAME ENGINE
- * ============================================================================
- */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -491,8 +421,10 @@ let currentLevel = maxUnlockedLevel;
 let totalGems = parseInt(localStorage.getItem('prismRoll_gems')) || 0;
 
 function saveProgress() {
-    localStorage.setItem('prismRoll_maxLvl', maxUnlockedLevel);
-    localStorage.setItem('prismRoll_gems', totalGems);
+    try {
+        localStorage.setItem('prismRoll_maxLvl', maxUnlockedLevel);
+        localStorage.setItem('prismRoll_gems', totalGems);
+    } catch (e) {}
     updateMenuUI();
 }
 
@@ -504,22 +436,8 @@ function updateMenuUI() {
 updateMenuUI();
 
 let gameState = 'MENU';
-let ball = {
-    x: 0,
-    y: 0,
-    radius: 18,
-    colorIndex: 0,
-    trail: []
-};
-
-let levelData = {
-    speed: 6,
-    length: 3000,
-    distanceTraveled: 0,
-    entities: [],
-    bgHue: 220
-};
-
+let ball = { x: 0, y: 0, radius: 18, colorIndex: 0, trail: [] };
+let levelData = { speed: 6, length: 3000, distanceTraveled: 0, entities: [], bgHue: 220 };
 let particles = [];
 let isDragging = false;
 let lastTouchX = 0;
@@ -548,4 +466,104 @@ function generateLevel(lvl) {
     let step = Math.max(240, 380 - (lvl * 0.25));
 
     while (z < levelLength - 500) {
-        let patter
+        let patternType = rand();
+
+        if (patternType < 0.22 && z > 800) {
+            let nextColor = (currentColor + 1 + Math.floor(rand() * (numColors - 1))) % numColors;
+            currentColor = nextColor;
+            entities.push({ type: 'GATE', z: z, colorIndex: currentColor, passed: false });
+            z += step * 1.1;
+        }
+        else if (patternType < 0.65) {
+            let lanes = lvl > 100 ? 4 : 3;
+            let safeLane = Math.floor(rand() * lanes);
+            let laneWidth = 2 / lanes;
+
+            for (let i = 0; i < lanes; i++) {
+                let blockColor = (i === safeLane) 
+                    ? currentColor 
+                    : (currentColor + 1 + Math.floor(rand() * (numColors - 1))) % numColors;
+                
+                entities.push({
+                    type: 'BLOCK',
+                    z: z,
+                    laneX: -1 + (i * laneWidth) + (laneWidth / 2),
+                    width: laneWidth * 0.88,
+                    colorIndex: blockColor,
+                    moveSpeed: (lvl > 50 && rand() > 0.7) ? (rand() > 0.5 ? 0.015 : -0.015) : 0
+                });
+            }
+            entities.push({
+                type: 'GEM',
+                z: z - 60,
+                laneX: -1 + (safeLane * laneWidth) + (laneWidth / 2),
+                collected: false
+            });
+            z += step;
+        }
+        else {
+            let side = rand() > 0.5 ? -0.45 : 0.45;
+            entities.push({
+                type: 'SPIKE',
+                z: z,
+                laneX: side,
+                width: 0.9,
+                moveSpeed: (lvl > 25) ? (rand() > 0.5 ? 0.02 : -0.02) : 0
+            });
+            entities.push({ type: 'GEM', z: z, laneX: -side, collected: false });
+            z += step * 0.9;
+        }
+    }
+
+    entities.push({ type: 'FINISH', z: levelLength });
+    levelData = { speed: speed, length: levelLength, distanceTraveled: 0, entities: entities, bgHue: bgHue };
+}
+
+// Canvas-only touch/mouse controls so UI buttons work cleanly!
+canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    isDragging = true;
+    lastTouchX = e.touches[0].clientX;
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!isDragging || gameState !== 'PLAYING') return;
+    let deltaX = e.touches[0].clientX - lastTouchX;
+    lastTouchX = e.touches[0].clientX;
+    let sensitivity = 2.4 / Math.min(width, 500);
+    ball.x = Math.max(-0.92, Math.min(0.92, ball.x + deltaX * sensitivity));
+}, { passive: false });
+
+canvas.addEventListener('touchend', () => { isDragging = false; });
+
+canvas.addEventListener('mousedown', e => { isDragging = true; lastTouchX = e.clientX; });
+canvas.addEventListener('mousemove', e => {
+    if (!isDragging || gameState !== 'PLAYING') return;
+    let deltaX = e.clientX - lastTouchX;
+    lastTouchX = e.clientX;
+    let sensitivity = 2.4 / Math.min(width, 500);
+    ball.x = Math.max(-0.92, Math.min(0.92, ball.x + deltaX * sensitivity));
+});
+canvas.addEventListener('mouseup', () => { isDragging = false; });
+
+function spawnParticles(x, y, colorHex, count = 20) {
+    for (let i = 0; i < count; i++) {
+        particles.push({
+            x: x, y: y,
+            vx: (Math.random() - 0.5) * 12,
+            vy: (Math.random() - 0.5) * 12,
+            life: 1.0,
+            color: colorHex,
+            size: Math.random() * 5 + 2
+        });
+    }
+}
+
+function startGame(lvl) {
+    if (lvl > maxUnlockedLevel) return;
+    currentLevel = lvl;
+    bonusClaimedThisLevel = false;
+    generateLevel(currentLevel);
+    particles = [];
+    gameState = 'PLAYING'
