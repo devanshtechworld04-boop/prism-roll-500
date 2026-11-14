@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PRISM ROLL: 500</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background-color: #050510;
+            color: #ffffff;
+            overflow: hidden;
+            touch-action: none;
+        }
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        /* UI Overlays */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 55px); /* Leave space for Bottom Banner Ad */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, rgba(15, 15, 35, 0.88) 0%, rgba(5, 5, 16, 0.98) 100%);
+            z-index: 10;
+            padding: 15px;
+            transition: opacity 0.3s ease;
+        }
+        .hidden {
+            display: none !important;
+        }
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #ff0055, #00f3ff, #ffea00, #00ff66);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .subtitle {
+            font-size: 0.95rem;
+            color: #a0a0c0;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .btn {
+            background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%);
+            color: #050510;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin: 8px;
+            transition: transform 0.15s ease;
+            width: 85%;
+            max-width: 300px;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn-reward {
+            background: linear-gradient(135deg, #ffea00 0%, #ff8800 100%);
+            box-shadow: 0 0 25px rgba(255, 234, 0, 0.5);
+            color: #050510;
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: none;
+            font-size: 0.95rem;
+            padding: 12px 25px;
+        }
+        /* Native Ad Slot Container */
+        #native-ad-container {
+            width: 85%;
+            max-width: 320px;
+            min-height: 85px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px dashed rgba(0, 243, 255, 0.25);
+            border-radius: 12px;
+            margin: 12px 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.7rem;
+            color: #667;
+            padding: 8px;
+        }
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+        .hud-box {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        #progressContainer {
+            position: absolute;
+            top: 65px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            max-width: 300px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            overflow: hidden;
+            z-index: 5;
+        }
+        #progressBar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #00f3ff, #ff0055);
+            transition: width 0.1s linear;
+        }
+        /* Level Selector Grid */
+        #levelSelectGrid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            max-height: 48vh;
+            overflow-y: auto;
+            padding: 15px;
+            width: 90%;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+        .lvl-item {
+            padding: 12px 5px;
+            text-align: center;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            background: rgba(0, 243, 255, 0.2);
+            border: 1px solid #00f3ff;
+        }
+        .lvl-locked {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #555;
+            cursor: not-allowed;
+        }
+        /* AdMob Banner Slot */
+        #admob-banner-slot {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 55px;
+            background: #020208;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.7rem;
+            color: #555;
+            z-index: 20;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Game Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- In-Game HUD -->
+    <div id="hud" class="hidden">
+        <div class="hud-box">LEVEL <span id="hudLevel">1</span> / 500</div>
+        <div class="hud-box">GEMS: <span id="hudGems">0</span></div>
+    </div>
+    <div id="progressContainer" class="hidden">
+        <div id="progressBar"></div>
+    </div>
+
+    <!-- Main Menu -->
+    <div id="mainMenu" class="overlay">
+        <h1>PRISM ROLL</h1>
+        <div class="subtitle">500 COSMIC LEVELS</div>
+        <div style="margin-bottom: 15px; font-size: 1.05rem; color: #00f3ff; font-weight: 600;">
+            Level: <span id="menuLevelDisplay">1</span> | Gems: <span id="menuGemsDisplay">0</span>
+        </div>
+        <button class="btn" onclick="startGame(currentLevel)">PLAY LEVEL <span id="playBtnLvl">1</span></button>
+        <button class="btn btn-secondary" onclick="openLevelSelect()">SELECT LEVEL (1-500)</button>
+        
+        <!-- Native Advanced Ad Slot -->
+        <div id="native-ad-container" data-ad-unit="ca-app-pub-5317235020851620/3716731101">
+            <span>SPONSORED</span>
+            <small style="color:#445; margin-top:4px;">Native Ad Unit Ready</small>
+        </div>
+
+        <p style="margin-top: 10px; font-size: 0.8rem; color: #888; text-align: center; max-width: 85%;">
+            Drag Left/Right to roll. Match your ball color with glowing gates & blocks!
+        </p>
+    </div>
+
+    <!-- Level Select Screen -->
+    <div id="levelSelectScreen" class="overlay hidden">
+        <h2 style="margin-bottom: 15px; letter-spacing: 2px;">SELECT LEVEL</h2>
+        <div id="levelSelectGrid"></div>
+        <button class="btn btn-secondary" onclick="closeLevelSelect()">BACK</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="overlay hidden">
+        <h1 style="background: linear-gradient(90deg, #ff0055, #ff5500); -webkit-background-clip: text;">SHATTERED!</h1>
+        <div class="subtitle">Wrong Color or Obstacle Hit</div>
+        <!-- Rewarded Ad Button -->
+        <button class="btn btn-reward" onclick="triggerRewardedRevive()">▶ REVIVE (WATCH AD)</button>
+        <button class="btn" onclick="startGame(currentLevel)">RETRY LEVEL</button>
+        <button class="btn btn-secondary" onclick="goHome()">MAIN MENU</button>
+    </div>
+
+    <!-- Level Complete Screen -->
+    <div id="levelCompleteScreen" class="overlay hidden">
+        <h1 style="background: linear-gradient(90deg, #00ff66, #00f3ff); -webkit-background-clip: text;">LEVEL CLEARED!</h1>
+        <div class="subtitle" id="winRewardText">+25 GEMS EARNED</div>
+        <!-- Rewarded Interstitial Button -->
+        <button class="btn btn-reward" id="btnDoubleGems" onclick="triggerRewardedInterstitialBonus()">⚡ 2X GEMS (+50 BONUS)</button>
+        <button class="btn" onclick="nextLevel()">NEXT LEVEL (<span id="nextLvlNum">2</span>)</button>
+        <button class="btn btn-secondary" onclick="goHome()">MAIN MENU</button>
+    </div>
+
+    <!-- AdMob Banner Space -->
+    <div id="admob-banner-slot" data-ad-unit="ca-app-pub-5317235020851620/2289913450">
+        AD BANNER SLOT (2289913450)
+    </div>
+
+<script>
+/**
+ * ============================================================================
+ * GOOGLE ADMOB FULL INTEGRATION BRIDGE (ALL 6 AD UNITS CONFIGURED)
+ * ============================================================================
+ */
+const AdMobConfig = {
+    bannerId: "ca-app-pub-5317235020851620/2289913450",
+    interstitialId: "ca-app-pub-5317235020851620/6967525065",
+    rewardedInterstitialId: "ca-app-pub-5317235020851620/9402116716",
+    rewardedId: "ca-app-pub-5317235020851620/6584381682",
+    nativeAdvancedId: "ca-app-pub-5317235020851620/3716731101",
+    appOpenId: "ca-app-pub-5317235020851620/1880905256",
+    levelsPerInterstitial: 3 // Every 3 completed levels triggers Interstitial Ad
+};
+
+let levelsPlayedCount = 0;
+let bonusClaimedThisLevel = false;
+
+// 1. Initialize AdMob, App Open Ad, Banner Ad & Native Ad on Startup
+async function initAllAdMobUnits() {
+    console.log("Initializing AdMob with User Ad Unit IDs...");
+    
+    // Capacitor AdMob Community Plugin Support
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+        const { AdMob } = window.Capacitor.Plugins;
+        try {
+            await AdMob.initialize({
+                requestTrackingAuthorization: true,
+                initializeForTesting: false // Live Ads Enabled
+            });
+
+            // Show Persistent Bottom Banner Ad
+            await AdMob.showBanner({
+                adId: AdMobConfig.bannerId,
+                adSize: 'ADAPTIVE_BANNER',
+                position: 'BOTTOM_CENTER',
+                margin: 0
+            });
+
+            // Preload Interstitial & Rewarded Ads
+            AdMob.prepareInterstitial({ adId: AdMobConfig.interstitialId });
+            AdMob.prepareRewardVideoAd({ adId: AdMobConfig.rewardedId });
+        } catch (err) {
+            console.error("AdMob Capacitor Init Error:", err);
+        }
+    }
+
+    // Native Android WebView Bridge Support (If wrapped via Android Studio / Sketchware / APK Builder)
+    if (window.AndroidAds) {
+        if (window.AndroidAds.loadAppOpen) window.AndroidAds.loadAppOpen(AdMobConfig.appOpenId);
+        if (window.AndroidAds.loadBanner) window.AndroidAds.loadBanner(AdMobConfig.bannerId);
+        if (window.AndroidAds.loadNative) window.AndroidAds.loadNative(AdMobConfig.nativeAdvancedId);
+        if (window.AndroidAds.preloadInterstitial) window.AndroidAds.preloadInterstitial(AdMobConfig.interstitialId);
+        if (window.AndroidAds.preloadRewarded) window.AndroidAds.preloadRewarded(AdMobConfig.rewardedId);
+        if (window.AndroidAds.preloadRewardedInterstitial) window.AndroidAds.preloadRewardedInterstitial(AdMobConfig.rewardedInterstitialId);
+    }
+}
+
+// Trigger App Open Ad when user returns to app from background
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && gameState === "MENU") {
+        if (window.AndroidAds && window.AndroidAds.showAppOpen) {
+            window.AndroidAds.showAppOpen(AdMobConfig.appOpenId);
+        }
+    }
+});
+
+// 2. Interstitial Ad Trigger (Every 3 Levels)
+async function showInterstitialAd() {
+    console.log("Showing Interstitial Ad:", AdMobConfig.interstitialId);
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+        const { AdMob } = window.Capacitor.Plugins;
+        try {
+            await AdMob.showInterstitial();
+            AdMob.prepareInterstitial({ adId: AdMobConfig.interstitialId }); // Preload next
+        } catch (e) { console.log(e); }
+    } else if (window.AndroidAds && window.AndroidAds.showInterstitial) {
+        window.AndroidAds.showInterstitial(AdMobConfig.interstitialId);
+    }
+}
+
+// 3. Rewarded Ad Trigger (Revive Player on Crash)
+async function triggerRewardedRevive() {
+    console.log("Showing Rewarded Ad for Revive:", AdMobConfig.rewardedId);
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+        const { AdMob } = window.Capacitor.Plugins;
+        try {
+            const reward = await AdMob.showRewardVideoAd();
+            if (reward) revivePlayer();
+            AdMob.prepareRewardVideoAd({ adId: AdMobConfig.rewardedId });
+        } catch (e) {
+            revivePlayer();
+        }
+    } else if (window.AndroidAds && window.AndroidAds.showRewarded) {
+        window.AndroidAds.showRewarded(AdMobConfig.rewardedId);
+        // Native callback should call window.onAdRewardEarned('revive')
+    } else {
+        // Fallback when testing in browser
+        revivePlayer();
+    }
+}
+
+// 4. Rewarded Interstitial Ad Trigger (2X Gems Bonus on Level Complete)
+async function triggerRewardedInterstitialBonus() {
+    if (bonusClaimedThisLevel) return;
+    console.log("Showing Rewarded Interstitial Ad for 2X Gems:", AdMobConfig.rewardedInterstitialId);
+    
+    if (window.AndroidAds && window.AndroidAds.showRewardedInterstitial) {
+        window.AndroidAds.showRewardedInterstitial(AdMobConfig.rewardedInterstitialId);
+    } else if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
+        const { AdMob } = window.Capacitor.Plugins;
+        try {
+            await AdMob.prepareRewardVideoAd({ adId: AdMobConfig.rewardedInterstitialId });
+            await AdMob.showRewardVideoAd();
+            grantDoubleGemsBonus();
+        } catch (e) {
+            grantDoubleGemsBonus();
+        }
+    } else {
+        // Fallback when testing in browser
+        grantDoubleGemsBonus();
+    }
+}
+
+function grantDoubleGemsBonus() {
+    if (bonusClaimedThisLevel) return;
+    bonusClaimedThisLevel = true;
+    totalGems += 25; // Extra +25 to make +50 total
+    saveProgress();
+    playSound('win');
+    document.getElementById('winRewardText').innerText = "2X BONUS CLAIMED! (+50 GEMS)";
+    document.getElementById('btnDoubleGems').classList.add('hidden');
+}
+
+// Global Callback Function for Native Android Java/Kotlin Bridge
+window.onAdRewardEarned = function(rewardType) {
+    if (rewardType === 'revive') revivePlayer();
+    if (rewardType === 'double_gems') grantDoubleGemsBonus();
+};
+
+window.addEventListener('load', initAllAdMobUnits);
+
+/**
+ * ============================================================================
+ * WEB AUDIO API SYNTHESIZER (NO EXTERNAL MP3 FILES NEEDED!)
+ * ============================================================================
+ */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+    if (type === 'gem') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+    } else if (type === 'switch') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+    } else if (type === 'crash') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.35);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+    } else if (type === 'win') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.setValueAtTime(500, now + 0.1);
+        osc.frequency.setValueAtTime(600, now + 0.2);
+        osc.frequency.setValueAtTime(800, now + 0.3);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        osc.start(now);
+        osc.stop(now + 0.5);
+    }
+}
+
+/**
+ * ============================================================================
+ * CORE 500-LEVEL PROCEDURAL GAME ENGINE
+ * ============================================================================
+ */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let width, height;
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const COLORS = [
+    { name: 'CYAN', hex: '#00f3ff', glow: 'rgba(0, 243, 255, 0.7)' },
+    { name: 'MAGENTA', hex: '#ff0055', glow: 'rgba(255, 0, 85, 0.7)' },
+    { name: 'GOLD', hex: '#ffea00', glow: 'rgba(255, 234, 0, 0.7)' },
+    { name: 'EMERALD', hex: '#00ff66', glow: 'rgba(0, 255, 102, 0.7)' }
+];
+
+let maxUnlockedLevel = parseInt(localStorage.getItem('prismRoll_maxLvl')) || 1;
+let currentLevel = maxUnlockedLevel;
+let totalGems = parseInt(localStorage.getItem('prismRoll_gems')) || 0;
+
+function saveProgress() {
+    localStorage.setItem('prismRoll_maxLvl', maxUnlockedLevel);
+    localStorage.setItem('prismRoll_gems', totalGems);
+    updateMenuUI();
+}
+
+function updateMenuUI() {
+    document.getElementById('menuLevelDisplay').innerText = currentLevel;
+    document.getElementById('playBtnLvl').innerText = currentLevel;
+    document.getElementById('menuGemsDisplay').innerText = totalGems;
+}
+updateMenuUI();
+
+let gameState = 'MENU';
+let ball = {
+    x: 0,
+    y: 0,
+    radius: 18,
+    colorIndex: 0,
+    trail: []
+};
+
+let levelData = {
+    speed: 6,
+    length: 3000,
+    distanceTraveled: 0,
+    entities: [],
+    bgHue: 220
+};
+
+let particles = [];
+let isDragging = false;
+let lastTouchX = 0;
+
+function seededRandom(seed) {
+    let x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+}
+
+function generateLevel(lvl) {
+    let seed = lvl * 1337;
+    const rand = () => { seed++; return seededRandom(seed); };
+
+    const speed = Math.min(18, 6.5 + (lvl * 0.022)); 
+    const levelLength = 3500 + (lvl * 35);
+    const numColors = lvl < 15 ? 2 : (lvl < 60 ? 3 : 4);
+    const bgHue = (lvl * 27) % 360;
+
+    let entities = [];
+    let currentColor = Math.floor(rand() * numColors);
+    ball.colorIndex = currentColor;
+    ball.x = 0;
+    ball.trail = [];
+
+    let z = 600;
+    let step = Math.max(240, 380 - (lvl * 0.25));
+
+    while (z < levelLength - 500) {
+        let patter
