@@ -276,14 +276,14 @@ async function initAllAdMobUnits() {
             const { AdMob } = window.Capacitor.Plugins;
             await AdMob.initialize({
                 requestTrackingAuthorization: true,
-                initializeForTesting: true // Change to false before Play Store upload
+                initializeForTesting: False // Change to false before Play Store upload
             });
             await AdMob.showBanner({
                 adId: AdMobConfig.bannerId,
                 adSize: 'ADAPTIVE_BANNER',
                 position: 'BOTTOM_CENTER',
                 margin: 0,
-                isTesting: true // Change to false before Play Store upload
+                isTesting: False // Change to false before Play Store upload
             });
             statusBox.innerText = "ADMOB ACTIVE";
             AdMob.prepareInterstitial({ adId: AdMobConfig.interstitialId, isTesting: true });
