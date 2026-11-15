@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Signed APK and PlayStore AAB
 
 on:
   push:
@@ -41,15 +41,48 @@ jobs:
               f.write(content)
           '
 
-      - name: Sync & Build APK
+      - name: Generate Signing Keystore
+        run: |
+          keytool -genkey -v -keystore android/app/prismroll.jks -keyalg RSA -keysize 2048 -validity 10000 -alias prismrollkey -storepass prism1234 -keypass prism1234 -dname "CN=PrismRoll, OU=Games, O=PrismStudio, L=Hyderabad, S=Telangana, C=IN"
+
+      - name: Configure Release Signing in Gradle
+        run: |
+          python3 -c '
+          path = "android/app/build.gradle"
+          with open(path, "r") as f:
+              content = f.read()
+          signing = """
+              signingConfigs {
+                  release {
+                      storeFile file("prismroll.jks")
+                      storePassword "prism1234"
+                      keyAlias "prismrollkey"
+                      keyPassword "prism1234"
+                  }
+              }
+          """
+          content = content.replace("buildTypes {", signing + "\n    buildTypes {")
+          content = content.replace("minifyEnabled false", "minifyEnabled false\n            signingConfig signingConfigs.release")
+          with open(path, "w") as f:
+              f.write(content)
+          '
+
+      - name: Sync & Build Signed APK + Play Store AAB
         run: |
           npx cap sync android
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease bundleRelease
 
-      - name: Upload APK
+      - name: Upload Signed APK (For Mobile Install)
         uses: actions/upload-artifact@v4
         with:
-          name: Prism-Roll-500-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: Prism-Roll-500-Signed-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload Play Store AAB (For Google Play Console)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Prism-Roll-500-PlayStore-AAB
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          
