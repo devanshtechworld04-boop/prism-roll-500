@@ -35,7 +35,7 @@ jobs:
           path = "android/app/src/main/AndroidManifest.xml"
           with open(path, "r") as f:
               content = f.read()
-          meta = "<meta-data android:name=\"com.google.android.gms.ads.APPLICATION_ID\" android:value=\"ca-app-pub-5317235020851620~7733811820\"/>"
+          meta = "<meta-data android:name=\"com.google.android.gms.ads.APPLICATION_ID\" android:value=\"ca-app-pub-5317235020851620~0000000000\"/>"
           content = content.replace("</application>", meta + "\n</application>")
           with open(path, "w") as f:
               f.write(content)
@@ -45,44 +45,29 @@ jobs:
         run: |
           keytool -genkey -v -keystore android/app/prismroll.jks -keyalg RSA -keysize 2048 -validity 10000 -alias prismrollkey -storepass prism1234 -keypass prism1234 -dname "CN=PrismRoll, OU=Games, O=PrismStudio, L=Hyderabad, S=Telangana, C=IN"
 
-      - name: Configure Release Signing in Gradle
-        run: |
-          python3 -c '
-          path = "android/app/build.gradle"
-          with open(path, "r") as f:
-              content = f.read()
-          signing = """
-              signingConfigs {
-                  release {
-                      storeFile file("prismroll.jks")
-                      storePassword "prism1234"
-                      keyAlias "prismrollkey"
-                      keyPassword "prism1234"
-                  }
-              }
-          """
-          content = content.replace("buildTypes {", signing + "\n    buildTypes {")
-          content = content.replace("minifyEnabled false", "minifyEnabled false\n            signingConfig signingConfigs.release")
-          with open(path, "w") as f:
-              f.write(content)
-          '
-
-      - name: Sync & Build Signed APK + Play Store AAB
+      - name: Sync & Build Unsigned Release
         run: |
           npx cap sync android
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease
 
-      - name: Upload Signed APK (For Mobile Install)
-        uses: actions/upload-artifact@v4
-        with:
-          name: Prism-Roll-500-Signed-APK
-          path: android/app/build/outputs/apk/release/app-release.apk
+      - name: Sign APK and AAB Directly with apksigner & jarsigner
+        run: |
+          BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/* | tail -n 1)
+          $BUILD_TOOLS/zipalign -v -p 4 android/app/build/outputs/apk/release/app-release-unsigned.apk android/app/build/outputs/apk/release/app-aligned.apk
+          $BUILD_TOOLS/apksigner sign --ks android/app/prismroll.jks --ks-pass pass:prism1234 --key-pass pass:prism1234 --ks-key-alias prismrollkey --out android/app/build/outputs/apk/release/PrismRoll500-Final.apk android/app/build/outputs/apk/release/app-aligned.apk
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore android/app/prismroll.jks -storepass prism1234 -keypass prism1234 android/app/build/outputs/bundle/release/app-release.aab prismrollkey
 
-      - name: Upload Play Store AAB (For Google Play Console)
+      - name: Upload Final Signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: Prism-Roll-500-PlayStore-AAB
+          name: PrismRoll500-Final-APK
+          path: android/app/build/outputs/apk/release/PrismRoll500-Final.apk
+
+      - name: Upload Play Store AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: PrismRoll500-PlayStore-AAB
           path: android/app/build/outputs/bundle/release/app-release.aab
           
