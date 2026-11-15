@@ -9,8 +9,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
@@ -18,28 +16,32 @@
             background-color: #050510;
             color: #ffffff;
             overflow: hidden;
-        }
-        #gameCanvas {
-            display: block;
             width: 100vw;
             height: 100vh;
-            touch-action: none;
         }
-        /* UI Overlays */
-        .overlay {
-            position: absolute;
+        #gameCanvas {
+            position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: calc(100% - 55px);
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            touch-action: none;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: calc(100vh - 60px);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: radial-gradient(circle at center, rgba(15, 15, 35, 0.92) 0%, rgba(5, 5, 16, 0.98) 100%);
-            z-index: 50;
-            padding: 15px;
-            touch-action: auto;
+            background: radial-gradient(circle at center, rgba(15, 15, 35, 0.94) 0%, rgba(5, 5, 16, 0.99) 100%);
+            z-index: 999;
+            padding: 20px;
+            pointer-events: auto;
         }
         .hidden {
             display: none !important;
@@ -66,20 +68,19 @@
             background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%);
             color: #050510;
             border: none;
-            padding: 16px 40px;
-            font-size: 1.1rem;
-            font-weight: 800;
+            padding: 18px 30px;
+            font-size: 1.15rem;
+            font-weight: 900;
             border-radius: 50px;
-            cursor: pointer;
             box-shadow: 0 0 25px rgba(0, 243, 255, 0.5);
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            margin: 8px;
+            margin: 10px 0;
             width: 85%;
             max-width: 300px;
-            position: relative;
-            z-index: 60;
-            touch-action: manipulation;
+            text-align: center;
+            cursor: pointer;
+            pointer-events: auto;
         }
         .btn:active {
             transform: scale(0.95);
@@ -90,12 +91,12 @@
             color: #050510;
         }
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.12);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.14);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.4);
             box-shadow: none;
-            font-size: 0.95rem;
-            padding: 14px 25px;
+            font-size: 1rem;
+            padding: 15px 25px;
         }
         #native-ad-container {
             width: 85%;
@@ -114,7 +115,7 @@
             padding: 8px;
         }
         #hud {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
@@ -122,20 +123,19 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            z-index: 5;
+            z-index: 50;
             pointer-events: none;
         }
         .hud-box {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.1);
             padding: 8px 16px;
             border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             font-weight: 700;
             font-size: 0.95rem;
         }
         #progressContainer {
-            position: absolute;
+            position: fixed;
             top: 65px;
             left: 50%;
             transform: translateX(-50%);
@@ -145,13 +145,12 @@
             background: rgba(255, 255, 255, 0.15);
             border-radius: 10px;
             overflow: hidden;
-            z-index: 5;
+            z-index: 50;
         }
         #progressBar {
             width: 0%;
             height: 100%;
             background: linear-gradient(90deg, #00f3ff, #ff0055);
-            transition: width 0.1s linear;
         }
         #levelSelectGrid {
             display: grid;
@@ -165,16 +164,14 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
             margin-bottom: 15px;
-            touch-action: pan-y;
         }
         .lvl-item {
-            padding: 12px 5px;
+            padding: 14px 5px;
             text-align: center;
             border-radius: 10px;
             font-weight: bold;
-            font-size: 0.9rem;
-            cursor: pointer;
-            background: rgba(0, 243, 255, 0.2);
+            font-size: 0.95rem;
+            background: rgba(0, 243, 255, 0.25);
             border: 1px solid #00f3ff;
         }
         .lvl-locked {
@@ -183,18 +180,18 @@
             color: #555;
         }
         #admob-banner-slot {
-            position: absolute;
+            position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 55px;
+            height: 60px;
             background: #020208;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 0.7rem;
             color: #555;
-            z-index: 20;
+            z-index: 1000;
             border-top: 1px solid rgba(255,255,255,0.08);
         }
     </style>
@@ -218,10 +215,10 @@
         <div style="margin-bottom: 15px; font-size: 1.05rem; color: #00f3ff; font-weight: 600;">
             Level: <span id="menuLevelDisplay">1</span> | Gems: <span id="menuGemsDisplay">0</span>
         </div>
-        <button type="button" class="btn" id="btnPlay">PLAY LEVEL <span id="playBtnLvl">1</span></button>
-        <button type="button" class="btn btn-secondary" id="btnSelectLevel">SELECT LEVEL (1-500)</button>
+        <div class="btn" id="btnPlay">PLAY LEVEL <span id="playBtnLvl">1</span></div>
+        <div class="btn btn-secondary" id="btnSelectLevel">SELECT LEVEL (1-500)</div>
         
-        <div id="native-ad-container" data-ad-unit="ca-app-pub-5317235020851620/3716731101">
+        <div id="native-ad-container">
             <span>SPONSORED</span>
             <small style="color:#445; margin-top:4px;">Native Ad Unit Ready</small>
         </div>
@@ -235,31 +232,28 @@
     <div id="levelSelectScreen" class="overlay hidden">
         <h2 style="margin-bottom: 15px; letter-spacing: 2px;">SELECT LEVEL</h2>
         <div id="levelSelectGrid"></div>
-        <button type="button" class="btn btn-secondary" id="btnBackMenu">BACK</button>
+        <div class="btn btn-secondary" id="btnBackMenu">BACK</div>
     </div>
 
     <!-- Game Over Screen -->
     <div id="gameOverScreen" class="overlay hidden">
         <h1 style="background: linear-gradient(90deg, #ff0055, #ff5500); -webkit-background-clip: text;">SHATTERED!</h1>
         <div class="subtitle">Wrong Color or Obstacle Hit</div>
-        <button type="button" class="btn btn-reward" id="btnRevive">▶ REVIVE (WATCH AD)</button>
-        <button type="button" class="btn" id="btnRetry">RETRY LEVEL</button>
-        <button type="button" class="btn btn-secondary" id="btnGameOverHome">MAIN MENU</button>
+        <div class="btn btn-reward" id="btnRevive">▶ REVIVE (WATCH AD)</div>
+        <div class="btn" id="btnRetry">RETRY LEVEL</div>
+        <div class="btn btn-secondary" id="btnGameOverHome">MAIN MENU</div>
     </div>
 
     <!-- Level Complete Screen -->
     <div id="levelCompleteScreen" class="overlay hidden">
         <h1 style="background: linear-gradient(90deg, #00ff66, #00f3ff); -webkit-background-clip: text;">LEVEL CLEARED!</h1>
         <div class="subtitle" id="winRewardText">+25 GEMS EARNED</div>
-        <button type="button" class="btn btn-reward" id="btnDoubleGems">⚡ 2X GEMS (+50 BONUS)</button>
-        <button type="button" class="btn" id="btnNextLevel">NEXT LEVEL (<span id="nextLvlNum">2</span>)</button>
-        <button type="button" class="btn btn-secondary" id="btnWinHome">MAIN MENU</button>
+        <div class="btn btn-reward" id="btnDoubleGems">⚡ 2X GEMS (+50 BONUS)</div>
+        <div class="btn" id="btnNextLevel">NEXT LEVEL (<span id="nextLvlNum">2</span>)</div>
+        <div class="btn btn-secondary" id="btnWinHome">MAIN MENU</div>
     </div>
 
-    <!-- AdMob Banner Space -->
-    <div id="admob-banner-slot" data-ad-unit="ca-app-pub-5317235020851620/2289913450">
-        AD BANNER SLOT (2289913450)
-    </div>
+    <div id="admob-banner-slot" id="adStatusText">LOADING ADMOB...</div>
 
 <script>
 const AdMobConfig = {
@@ -276,24 +270,29 @@ let levelsPlayedCount = 0;
 let bonusClaimedThisLevel = false;
 
 async function initAllAdMobUnits() {
+    const statusBox = document.getElementById('admob-banner-slot');
     try {
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
             const { AdMob } = window.Capacitor.Plugins;
             await AdMob.initialize({
                 requestTrackingAuthorization: true,
-                initializeForTesting: false
+                initializeForTesting: true // Change to false before Play Store upload
             });
             await AdMob.showBanner({
                 adId: AdMobConfig.bannerId,
                 adSize: 'ADAPTIVE_BANNER',
                 position: 'BOTTOM_CENTER',
-                margin: 0
+                margin: 0,
+                isTesting: true // Change to false before Play Store upload
             });
-            AdMob.prepareInterstitial({ adId: AdMobConfig.interstitialId });
-            AdMob.prepareRewardVideoAd({ adId: AdMobConfig.rewardedId });
+            statusBox.innerText = "ADMOB ACTIVE";
+            AdMob.prepareInterstitial({ adId: AdMobConfig.interstitialId, isTesting: true });
+            AdMob.prepareRewardVideoAd({ adId: AdMobConfig.rewardedId, isTesting: true });
+        } else {
+            statusBox.innerText = "WEB PREVIEW MODE";
         }
     } catch (err) {
-        console.log("AdMob init skipped or pending:", err);
+        statusBox.innerText = "AD STATUS: " + (err.message || "WAITING");
     }
 }
 
@@ -302,7 +301,7 @@ async function showInterstitialAd() {
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
             const { AdMob } = window.Capacitor.Plugins;
             await AdMob.showInterstitial();
-            AdMob.prepareInterstitial({ adId: AdMobConfig.interstitialId });
+            AdMob.prepareInterstitial({ adId: AdMobConfig.interstitialId, isTesting: true });
         }
     } catch (e) {}
 }
@@ -313,7 +312,7 @@ async function triggerRewardedRevive() {
             const { AdMob } = window.Capacitor.Plugins;
             const reward = await AdMob.showRewardVideoAd();
             if (reward) revivePlayer();
-            AdMob.prepareRewardVideoAd({ adId: AdMobConfig.rewardedId });
+            AdMob.prepareRewardVideoAd({ adId: AdMobConfig.rewardedId, isTesting: true });
             return;
         }
     } catch (e) {}
@@ -325,7 +324,7 @@ async function triggerRewardedInterstitialBonus() {
     try {
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
             const { AdMob } = window.Capacitor.Plugins;
-            await AdMob.prepareRewardVideoAd({ adId: AdMobConfig.rewardedInterstitialId });
+            await AdMob.prepareRewardVideoAd({ adId: AdMobConfig.rewardedInterstitialId, isTesting: true });
             await AdMob.showRewardVideoAd();
         }
     } catch (e) {}
@@ -342,9 +341,9 @@ function grantDoubleGemsBonus() {
     document.getElementById('btnDoubleGems').classList.add('hidden');
 }
 
-window.addEventListener('load', initAllAdMobUnits);
+setTimeout(initAllAdMobUnits, 1000);
 
-// Safe Web Audio Synthesizer
+// Audio Synthesizer
 let audioCtx = null;
 function playSound(type) {
     try {
@@ -519,21 +518,18 @@ function generateLevel(lvl) {
     levelData = { speed: speed, length: levelLength, distanceTraveled: 0, entities: entities, bgHue: bgHue };
 }
 
-// Canvas-only touch/mouse controls so UI buttons work cleanly!
 canvas.addEventListener('touchstart', e => {
-    e.preventDefault();
     isDragging = true;
     lastTouchX = e.touches[0].clientX;
-}, { passive: false });
+}, { passive: true });
 
 canvas.addEventListener('touchmove', e => {
-    e.preventDefault();
     if (!isDragging || gameState !== 'PLAYING') return;
     let deltaX = e.touches[0].clientX - lastTouchX;
     lastTouchX = e.touches[0].clientX;
     let sensitivity = 2.4 / Math.min(width, 500);
     ball.x = Math.max(-0.92, Math.min(0.92, ball.x + deltaX * sensitivity));
-}, { passive: false });
+}, { passive: true });
 
 canvas.addEventListener('touchend', () => { isDragging = false; });
 
@@ -566,4 +562,311 @@ function startGame(lvl) {
     bonusClaimedThisLevel = false;
     generateLevel(currentLevel);
     particles = [];
-    gameState = 'PLAYING'
+    gameState = 'PLAYING';
+
+    document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden'));
+    document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('progressContainer').classList.remove('hidden');
+    document.getElementById('hudLevel').innerText = currentLevel;
+    document.getElementById('hudGems').innerText = totalGems;
+}
+
+function revivePlayer() {
+    levelData.entities.forEach(ent => {
+        if (ent.z > levelData.distanceTraveled - 100 && ent.z < levelData.distanceTraveled + 500) {
+            if (ent.type === 'BLOCK' || ent.type === 'SPIKE') ent.z = -9999;
+        }
+    });
+    gameState = 'PLAYING';
+    document.getElementById('gameOverScreen').classList.add('hidden');
+    document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('progressContainer').classList.remove('hidden');
+}
+
+function triggerGameOver() {
+    gameState = 'GAMEOVER';
+    playSound('crash');
+    const trackWidth = Math.min(width * 0.88, 420);
+    const screenX = (width / 2) + (ball.x * (trackWidth / 2));
+    spawnParticles(screenX, height - 150, COLORS[ball.colorIndex].hex, 35);
+
+    setTimeout(() => {
+        document.getElementById('hud').classList.add('hidden');
+        document.getElementById('progressContainer').classList.add('hidden');
+        document.getElementById('gameOverScreen').classList.remove('hidden');
+    }, 450);
+}
+
+function triggerLevelComplete() {
+    gameState = 'WIN';
+    playSound('win');
+    totalGems += 25;
+    if (currentLevel === maxUnlockedLevel && maxUnlockedLevel < 500) {
+        maxUnlockedLevel++;
+    }
+    saveProgress();
+
+    levelsPlayedCount++;
+    if (levelsPlayedCount % AdMobConfig.levelsPerInterstitial === 0) {
+        showInterstitialAd();
+    }
+
+    document.getElementById('hud').classList.add('hidden');
+    document.getElementById('progressContainer').classList.add('hidden');
+    document.getElementById('winRewardText').innerText = "+25 GEMS EARNED";
+    document.getElementById('btnDoubleGems').classList.remove('hidden');
+    document.getElementById('nextLvlNum').innerText = Math.min(500, currentLevel + 1);
+    document.getElementById('levelCompleteScreen').classList.remove('hidden');
+}
+
+function nextLevel() {
+    if (currentLevel < 500) startGame(currentLevel + 1);
+    else goHome();
+}
+
+function goHome() {
+    gameState = 'MENU';
+    updateMenuUI();
+    document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden'));
+    document.getElementById('hud').classList.add('hidden');
+    document.getElementById('progressContainer').classList.add('hidden');
+    document.getElementById('mainMenu').classList.remove('hidden');
+}
+
+function bindTap(element, callback) {
+    if (!element) return;
+    element.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        callback();
+    }, { passive: false });
+    element.addEventListener('click', function(e) {
+        callback();
+    });
+}
+
+function openLevelSelect() {
+    const grid = document.getElementById('levelSelectGrid');
+    grid.innerHTML = '';
+    for (let i = 1; i <= 500; i++) {
+        const div = document.createElement('div');
+        div.innerText = i;
+        if (i <= maxUnlockedLevel) {
+            div.className = 'lvl-item';
+            bindTap(div, () => startGame(i));
+        } else {
+            div.className = 'lvl-item lvl-locked';
+        }
+        grid.appendChild(div);
+    }
+    document.getElementById('mainMenu').classList.add('hidden');
+    document.getElementById('levelSelectScreen').classList.remove('hidden');
+}
+
+function closeLevelSelect() {
+    document.getElementById('levelSelectScreen').classList.add('hidden');
+    document.getElementById('mainMenu').classList.remove('hidden');
+}
+
+bindTap(document.getElementById('btnPlay'), () => startGame(currentLevel));
+bindTap(document.getElementById('btnSelectLevel'), openLevelSelect);
+bindTap(document.getElementById('btnBackMenu'), closeLevelSelect);
+bindTap(document.getElementById('btnRevive'), triggerRewardedRevive);
+bindTap(document.getElementById('btnRetry'), () => startGame(currentLevel));
+bindTap(document.getElementById('btnGameOverHome'), goHome);
+bindTap(document.getElementById('btnDoubleGems'), triggerRewardedInterstitialBonus);
+bindTap(document.getElementById('btnNextLevel'), nextLevel);
+bindTap(document.getElementById('btnWinHome'), goHome);
+
+function updateAndDraw() {
+    requestAnimationFrame(updateAndDraw);
+
+    ctx.fillStyle = `hsl(${levelData.bgHue}, 60%, 6%)`;
+    ctx.fillRect(0, 0, width, height);
+
+    const trackWidth = Math.min(width * 0.88, 420);
+    const trackLeft = (width - trackWidth) / 2;
+    const trackRight = trackLeft + trackWidth;
+    const horizonY = height * 0.15;
+    const playerY = height - 150;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(width / 2 - trackWidth * 0.25, horizonY);
+    ctx.lineTo(width / 2 + trackWidth * 0.25, horizonY);
+    ctx.lineTo(trackRight, height);
+    ctx.lineTo(trackLeft, height);
+    ctx.closePath();
+    ctx.fillStyle = `hsla(${levelData.bgHue}, 50%, 12%, 0.85)`;
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = `hsla(${levelData.bgHue}, 90%, 60%, 0.4)`;
+    ctx.stroke();
+
+    let gridOffset = (levelData.distanceTraveled % 120) / 120;
+    for (let i = 0; i < 10; i++) {
+        let p = (i + gridOffset) / 10;
+        let persp = Math.pow(p, 1.8);
+        let y = horizonY + persp * (height - horizonY);
+        let w = (trackWidth * 0.25) + persp * (trackWidth * 0.75);
+
+        ctx.beginPath();
+        ctx.moveTo(width / 2 - w, y);
+        ctx.lineTo(width / 2 + w, y);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${persp * 0.15})`;
+        ctx.stroke();
+    }
+    ctx.restore();
+
+    if (gameState === 'PLAYING') {
+        levelData.distanceTraveled += levelData.speed;
+
+        let progress = Math.min(100, (levelData.distanceTraveled / levelData.length) * 100);
+        document.getElementById('progressBar').style.width = progress + '%';
+
+        let visibleEntities = levelData.entities.filter(e => {
+            let relZ = e.z - levelData.distanceTraveled;
+            return relZ > -100 && relZ < 1400;
+        }).sort((a, b) => b.z - a.z);
+
+        for (let ent of visibleEntities) {
+            let relZ = ent.z - levelData.distanceTraveled;
+            let normZ = 1 - (relZ / 1400);
+            if (normZ < 0) continue;
+
+            let persp = Math.pow(normZ, 1.7);
+            let screenY = horizonY + persp * (playerY - horizonY);
+            let currentTrackW = (trackWidth * 0.25) + persp * (trackWidth * 0.75);
+
+            if (ent.moveSpeed) {
+                ent.laneX += ent.moveSpeed;
+                if (ent.laneX > 0.65 || ent.laneX < -0.65) ent.moveSpeed *= -1;
+            }
+
+            if (ent.type === 'GATE') {
+                let colorObj = COLORS[ent.colorIndex];
+                ctx.fillStyle = colorObj.glow;
+                ctx.fillRect(width / 2 - currentTrackW / 2, screenY - 12 * persp, currentTrackW, 24 * persp);
+
+                if (!ent.passed && Math.abs(screenY - playerY) < 22) {
+                    ent.passed = true;
+                    ball.colorIndex = ent.colorIndex;
+                    playSound('switch');
+                    spawnParticles(width / 2 + ball.x * (trackWidth / 2), playerY, colorObj.hex, 15);
+                }
+            }
+            else if (ent.type === 'BLOCK') {
+                let colorObj = COLORS[ent.colorIndex];
+                let blockW = (ent.width / 2) * currentTrackW;
+                let blockH = 28 * persp;
+                let blockX = (width / 2) + (ent.laneX * (currentTrackW / 2)) - (blockW / 2);
+
+                ctx.fillStyle = colorObj.hex;
+                ctx.shadowBlur = 15 * persp;
+                ctx.shadowColor = colorObj.hex;
+                ctx.fillRect(blockX, screenY - blockH, blockW, blockH);
+                ctx.shadowBlur = 0;
+
+                if (Math.abs(screenY - playerY) < 20) {
+                    let halfW = ent.width / 2;
+                    if (ball.x > ent.laneX - halfW && ball.x < ent.laneX + halfW) {
+                        if (ball.colorIndex !== ent.colorIndex) {
+                            triggerGameOver();
+                            return;
+                        }
+                    }
+                }
+            }
+            else if (ent.type === 'SPIKE') {
+                let spikeW = (ent.width / 2) * currentTrackW;
+                let spikeH = 24 * persp;
+                let spikeX = (width / 2) + (ent.laneX * (currentTrackW / 2)) - (spikeW / 2);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#ff0000';
+                ctx.fillRect(spikeX, screenY - spikeH, spikeW, spikeH);
+                ctx.shadowBlur = 0;
+
+                if (Math.abs(screenY - playerY) < 18) {
+                    let halfW = ent.width / 2;
+                    if (ball.x > ent.laneX - halfW && ball.x < ent.laneX + halfW) {
+                        triggerGameOver();
+                        return;
+                    }
+                }
+            }
+            else if (ent.type === 'GEM' && !ent.collected) {
+                let gemX = (width / 2) + (ent.laneX * (currentTrackW / 2));
+                let gemR = 10 * persp;
+
+                ctx.beginPath();
+                ctx.arc(gemX, screenY - gemR, gemR, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+
+                if (Math.abs(screenY - playerY) < 25 && Math.abs(ball.x - ent.laneX) < 0.22) {
+                    ent.collected = true;
+                    totalGems += 1;
+                    document.getElementById('hudGems').innerText = totalGems;
+                    playSound('gem');
+                    spawnParticles(gemX, playerY, '#ffffff', 8);
+                }
+            }
+            else if (ent.type === 'FINISH') {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(width / 2 - currentTrackW / 2, screenY - 15 * persp, currentTrackW, 30 * persp);
+                if (screenY >= playerY) {
+                    triggerLevelComplete();
+                    return;
+                }
+            }
+        }
+
+        let playerScreenX = (width / 2) + (ball.x * (trackWidth / 2));
+        let activeColor = COLORS[ball.colorIndex];
+
+        ball.trail.push({ x: playerScreenX, y: playerY });
+        if (ball.trail.length > 14) ball.trail.shift();
+
+        for (let i = 0; i < ball.trail.length; i++) {
+            let ratio = i / ball.trail.length;
+            ctx.beginPath();
+            ctx.arc(ball.trail[i].x, ball.trail[i].y + (1 - ratio) * 35, ball.radius * ratio * 0.85, 0, Math.PI * 2);
+            ctx.fillStyle = activeColor.glow;
+            ctx.fill();
+        }
+
+        ctx.beginPath();
+        ctx.arc(playerScreenX, playerY, ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = activeColor.hex;
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = activeColor.hex;
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.03;
+        if (p.life <= 0) {
+            particles.splice(i, 1);
+        } else {
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
+    }
+}
+
+updateAndDraw();
+</script>
+</body>
+</html>
